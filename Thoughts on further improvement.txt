@@ -1,0 +1,3 @@
+Implement logging 
+Remove liked songs that don't exist on spotify anymore
+SpotifyHelper hardcoded values
