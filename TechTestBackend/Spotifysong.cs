@@ -1,7 +1,6 @@
-﻿
-namespace TechTestBackend;
+﻿namespace TechTestBackend;
 
-public class Soptifysong
+public class Spotifysong
 {
     public string Id { get; set; }
     public string Name { get; set; }

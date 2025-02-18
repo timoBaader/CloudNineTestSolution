@@ -1,3 +1,4 @@
 Implement logging 
+Only development environment
 Remove liked songs that don't exist on spotify anymore
 SpotifyHelper hardcoded values

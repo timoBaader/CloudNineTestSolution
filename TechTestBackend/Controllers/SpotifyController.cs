@@ -22,17 +22,30 @@ public class SpotifyController : ControllerBase
     [Route("searchTracks")]
     public IActionResult SearchTracks(string name)
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            return BadRequest("Song name cannot be empty.");
+        }
+
         try
         {
-            // TODO: Implement this method
-            object trak = SpotifyHelper.GetTracks(name);
+            Spotifysong[] result = SpotifyHelper.GetTracks(name);
 
-            return Ok(trak);
+            if (!result.Any())
+            {
+                return NotFound("No songs were found");
+            }
+
+            return Ok(result);
         }
+        // TODO: Catch 429 error codes as it indicates spotify's rate limit has been exceeded
+        // use the "retryAfter" header and implement a retry method
         catch (Exception e)
         {
-            // this is the best practice for not leaking error details
-            return NotFound();
+            return StatusCode(
+                500,
+                new { error = "An unexpected error occurred.", details = e.Message }
+            );
         }
     }
 
@@ -40,13 +53,18 @@ public class SpotifyController : ControllerBase
     [Route("like")]
     public IActionResult Like(string id)
     {
-        var track = SpotifyHelper.GetTrack(id); //check if trak exists
-        if (track.Id == null || SpotifyId(id) == false)
+        if (string.IsNullOrEmpty(id))
         {
-            return StatusCode(400);
+            return BadRequest("Song name cannot be empty.");
         }
 
-        var song = new Soptifysong(); //create new song
+        var track = SpotifyHelper.GetTrack(id);
+        if (track.Id == null)
+        {
+            return NotFound("Song not found");
+        }
+
+        var song = new Spotifysong();
         song.Id = id;
         song.Name = track.Name;
 
@@ -74,13 +92,18 @@ public class SpotifyController : ControllerBase
     [Route("removeLike")]
     public IActionResult RemoveLike(string id)
     {
-        var track = SpotifyHelper.GetTrack(id);
-        if (track.Id == null || SpotifyId(id) == false)
+        if (string.IsNullOrEmpty(id))
         {
-            return StatusCode(400); // bad request wrong id not existing in spotify
+            return BadRequest("Song name cannot be empty.");
         }
 
-        var song = new Soptifysong();
+        var track = SpotifyHelper.GetTrack(id);
+        if (track.Id == null)
+        {
+            return StatusCode(400);
+        }
+
+        var song = new Spotifysong();
         song.Id = id;
 
         if (!SongExists(song.Id))
@@ -88,7 +111,7 @@ public class SpotifyController : ControllerBase
 
         try
         {
-            _context.LikedSongs.Remove(song); // this is not working every tume
+            _context.LikedSongs.Remove(song);
             _context.SaveChanges();
         }
         catch (Exception e)
@@ -106,9 +129,10 @@ public class SpotifyController : ControllerBase
     [Route("listLiked")]
     public IActionResult ListLiked()
     {
-        var likedSongs = _context.LikedSongs;
-        var validLikedSongs = new List<Soptifysong>();
+        var likedSongs = _context.LikedSongs.ToList();
+        var validLikedSongs = new List<Spotifysong>();
 
+        // TODO: make API calls async
         try
         {
             validLikedSongs = likedSongs
@@ -130,10 +154,5 @@ public class SpotifyController : ControllerBase
     private bool SongExists(string id)
     {
         return _context.LikedSongs.Any(s => s.Id == id);
-    }
-
-    private static bool SpotifyId(object id)
-    {
-        return id.ToString()?.Length == 22;
     }
 }
