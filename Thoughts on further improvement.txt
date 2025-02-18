@@ -1,4 +1,15 @@
-Implement logging 
-Only development environment
-Remove liked songs that don't exist on spotify anymore
-SpotifyHelper hardcoded values
+Logging should be implemented for production and development environment
+
+There should be a production environment
+
+Spotify return a 429 error when the rate limit has been exceeded. With this error comes a "RetryAfter" header
+which specifies when the user can make another request. The code should be refactored to automatically call the
+API after the specified time has elapsed.
+
+Testing should be implemented. Automated tests could run and give us information about the health of our application.
+
+If many users would use this application, the api calls could be made in a separate microservice where we implement 
+Spotifys "extended quota mode" to allow for more api calls.
+
+Caching
+
