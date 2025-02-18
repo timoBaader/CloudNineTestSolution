@@ -6,25 +6,24 @@ namespace TechTestBackend;
 
 public static class SpotifyHelper
 {
-    public static Spotifysong[] GetTracks(string name)
+    private static HttpClient client = new HttpClient();
+    private static readonly string c_id = "996d0037680544c987287a9b0470fdbb";
+    private static readonly string c_s = "5a3c92099a324b8f9e45d77e919fec13";
+
+    public static async Task<Spotifysong[]> GetTracksAsync(string name)
     {
-        var client = new HttpClient();
-        var c_id = "996d0037680544c987287a9b0470fdbb";
-        var c_s = "5a3c92099a324b8f9e45d77e919fec13";
         var e = Encoding.ASCII.GetBytes($"{c_id}:{c_s}");
         var base64 = Convert.ToBase64String(e);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64);
 
-        var password = client
-            .PostAsync(
-                "https://accounts.spotify.com/api/token",
-                new FormUrlEncodedContent(
-                    new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") }
-                )
+        var password = await client.PostAsync(
+            "https://accounts.spotify.com/api/token",
+            new FormUrlEncodedContent(
+                new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") }
             )
-            .Result;
+        );
         dynamic Password_content = JsonConvert.DeserializeObject(
-            password.Content.ReadAsStringAsync().Result
+            await password.Content.ReadAsStringAsync()
         );
 
         client = new HttpClient();
@@ -33,37 +32,30 @@ public static class SpotifyHelper
             Password_content.access_token.ToString()
         );
 
-        var response = client
-            .GetAsync("https://api.spotify.com/v1/search?q=" + name + "&type=track")
-            .Result;
-        dynamic objects = JsonConvert.DeserializeObject(
-            response.Content.ReadAsStringAsync().Result
+        var response = await client.GetAsync(
+            "https://api.spotify.com/v1/search?q=" + name + "&type=track"
         );
+        dynamic objects = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
 
         var songs = JsonConvert.DeserializeObject<Spotifysong[]>(objects.tracks.items.ToString());
 
         return songs;
     }
 
-    public static Spotifysong GetTrack(string id)
+    public static async Task<Spotifysong> GetTrackAsync(string id)
     {
-        var client = new HttpClient();
-        var c_id = "996d0037680544c987287a9b0470fdbb";
-        var c_s = "5a3c92099a324b8f9e45d77e919fec13";
         var e = Encoding.ASCII.GetBytes($"{c_id}:{c_s}");
         var base64 = Convert.ToBase64String(e);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64);
 
-        var password = client
-            .PostAsync(
-                "https://accounts.spotify.com/api/token",
-                new FormUrlEncodedContent(
-                    new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") }
-                )
+        var password = await client.PostAsync(
+            "https://accounts.spotify.com/api/token",
+            new FormUrlEncodedContent(
+                new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") }
             )
-            .Result;
+        );
         dynamic Password_content = JsonConvert.DeserializeObject(
-            password.Content.ReadAsStringAsync().Result
+            await password.Content.ReadAsStringAsync()
         );
 
         client = new HttpClient();
@@ -72,10 +64,8 @@ public static class SpotifyHelper
             Password_content.access_token.ToString()
         );
 
-        var response = client.GetAsync("https://api.spotify.com/v1/tracks/" + id + "/").Result;
-        dynamic objects = JsonConvert.DeserializeObject(
-            response.Content.ReadAsStringAsync().Result
-        );
+        var response = await client.GetAsync("https://api.spotify.com/v1/tracks/" + id + "/");
+        dynamic objects = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
 
         var song = JsonConvert.DeserializeObject<Spotifysong>(objects.ToString());
 

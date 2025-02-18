@@ -1,9 +1,4 @@
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using MessagePack.Internal;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace TechTestBackend.Controllers;
 
@@ -20,7 +15,7 @@ public class SpotifyController : ControllerBase
 
     [HttpGet]
     [Route("searchTracks")]
-    public IActionResult SearchTracks(string name)
+    public async Task<IActionResult> SearchTracks(string name)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -29,7 +24,7 @@ public class SpotifyController : ControllerBase
 
         try
         {
-            Spotifysong[] result = SpotifyHelper.GetTracks(name);
+            Spotifysong[] result = await SpotifyHelper.GetTracksAsync(name);
 
             if (!result.Any())
             {
@@ -51,14 +46,14 @@ public class SpotifyController : ControllerBase
 
     [HttpPost]
     [Route("like")]
-    public IActionResult Like(string id)
+    public async Task<IActionResult> Like(string id)
     {
         if (string.IsNullOrEmpty(id))
         {
             return BadRequest("Song name cannot be empty.");
         }
 
-        var track = SpotifyHelper.GetTrack(id);
+        var track = await SpotifyHelper.GetTrackAsync(id);
         if (track.Id == null)
         {
             return NotFound("Song not found");
@@ -90,14 +85,14 @@ public class SpotifyController : ControllerBase
 
     [HttpPost]
     [Route("removeLike")]
-    public IActionResult RemoveLike(string id)
+    public async Task<IActionResult> RemoveLike(string id)
     {
         if (string.IsNullOrEmpty(id))
         {
             return BadRequest("Song name cannot be empty.");
         }
 
-        var track = SpotifyHelper.GetTrack(id);
+        var track = await SpotifyHelper.GetTrackAsync(id);
         if (track.Id == null)
         {
             return StatusCode(400);
@@ -127,25 +122,27 @@ public class SpotifyController : ControllerBase
 
     [HttpGet]
     [Route("listLiked")]
-    public IActionResult ListLiked()
+    public async Task<IActionResult> ListLiked()
     {
         var likedSongs = _context.LikedSongs.ToList();
         var validLikedSongs = new List<Spotifysong>();
 
-        // TODO: make API calls async
         try
         {
-            validLikedSongs = likedSongs
-                .Select(s => new { Song = s, Track = SpotifyHelper.GetTrack(s.Id) })
-                .Where(x => x.Track != null)
-                .Select(x => x.Song)
-                .ToList();
+            foreach (var song in likedSongs)
+            {
+                var track = await SpotifyHelper.GetTrackAsync(song.Id);
+                if (track != null)
+                {
+                    validLikedSongs.Add(song);
+                }
+            }
         }
         catch (Exception e)
         {
             return StatusCode(
                 500,
-                new { error = "An unexpected error ocurred", details = e.Message }
+                new { error = "An unexpected error occurred", details = e.Message }
             );
         }
         return Ok(validLikedSongs);
