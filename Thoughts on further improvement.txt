@@ -11,5 +11,17 @@ Testing should be implemented. Automated tests could run and give us information
 If many users would use this application, the api calls could be made in a separate microservice where we implement 
 Spotifys "extended quota mode" to allow for more api calls.
 
-Caching
+Caching could be implemented to not always make an api call to check if some of the songs we have liked have since been
+removed from spotify.
 
+Spotify also allows to retrieve only parts of the list of liked songs. As the user scrolls through his list of liked songs
+(which might be quite big) we could little by little fetch the songs from spotify and check if they still exist. Another
+approach would be to periodically check this, not depending on the users behaviour.
+
+Im not sure if the spotifyHelper class should be static. I have been trying to implement unit tests and wanted to mock the spotify
+api calls and then realized I cannot do that with a static class. This is an example of where my knowledge ends. I am not sure
+if having this class static gives us any advantages that I don't see, that's why I haven't changed it to be a non static class. 
+
+Client secrets should be stored in environment variables or some sort of secrets manager
+
+And one last nitpick, I would like that we would either use "Track" or "Song" app wide to refer to songs.
